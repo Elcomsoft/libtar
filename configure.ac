@@ -51,7 +51,7 @@ fi
 
 dnl ### Checks for header files. ###################################
 AC_HEADER_STDC
-AC_CHECK_HEADERS([unistd.h])
+AC_CHECK_HEADERS([unistd.h pwd.h grp.h tar.h windows.h])
 AC_HEADER_MAJOR
 PSG_REPLACE_TYPE([major_t], [unsigned int], [
   #include <sys/types.h>
@@ -118,8 +118,17 @@ if test "$with_zlib" = "yes"; then
   AC_CHECK_LIB([z], [gzread])
 fi
 
+# Check for operating system
+AC_MSG_CHECKING([whether we need platform-specific build settings])
+case $host_os in
+  *mingw32*|*cygwin*)
+  AC_MSG_RESULT([${host_os}])
+  win32=true
+  LDFLAGS+=" -no-undefined"
+      ;;
+esac
+
 
 dnl ### Create output files. #######################################
 AC_CONFIG_FILES([Makefile lib/Makefile libtar/Makefile doc/Makefile])
 AC_OUTPUT
-

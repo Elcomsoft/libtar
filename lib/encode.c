@@ -13,8 +13,12 @@
 #include <internal.h>
 
 #include <stdio.h>
-#include <pwd.h>
-#include <grp.h>
+#ifdef HAVE_PWD_H
+# include <pwd.h>
+#endif
+#ifdef HAVE_GRP_H
+# include <grp.h>
+#endif
 #include <sys/types.h>
 
 #ifdef STDC_HEADERS
@@ -144,12 +148,14 @@ th_set_link(TAR *t, const char *linkname)
 void
 th_set_device(TAR *t, dev_t device)
 {
+#ifndef HAVE_WINDOWS_H
 #ifdef DEBUG
 	printf("th_set_device(): major = %d, minor = %d\n",
 	       major(device), minor(device));
 #endif
 	int_to_oct(major(device), t->th_buf.devmajor, 8);
 	int_to_oct(minor(device), t->th_buf.devminor, 8);
+#endif
 }
 
 
@@ -157,12 +163,13 @@ th_set_device(TAR *t, dev_t device)
 void
 th_set_user(TAR *t, uid_t uid)
 {
+#ifdef HAVE_PWD_H
 	struct passwd *pw;
 
 	pw = getpwuid(uid);
 	if (pw != NULL)
 		strlcpy(t->th_buf.uname, pw->pw_name, sizeof(t->th_buf.uname));
-
+#endif
 	int_to_oct(uid, t->th_buf.uid, 8);
 }
 
@@ -171,12 +178,13 @@ th_set_user(TAR *t, uid_t uid)
 void
 th_set_group(TAR *t, gid_t gid)
 {
+#ifdef HAVE_GRP_H
 	struct group *gr;
 
 	gr = getgrgid(gid);
 	if (gr != NULL)
 		strlcpy(t->th_buf.gname, gr->gr_name, sizeof(t->th_buf.gname));
-
+#endif
 	int_to_oct(gid, t->th_buf.gid, 8);
 }
 
@@ -209,5 +217,3 @@ th_set_from_stat(TAR *t, struct stat *s)
 	else
 		th_set_size(t, 0);
 }
-
-

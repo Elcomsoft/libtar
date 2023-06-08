@@ -57,8 +57,7 @@ segv_handler(int sig)
 
 int use_zlib = 0;
 
-int
-gzopen_frontend(char *pathname, int oflags, int mode)
+void *gzopen_frontend(char *pathname, int oflags, int mode)
 {
 	char *gzoflags;
 	gzFile gzf;
@@ -75,31 +74,27 @@ gzopen_frontend(char *pathname, int oflags, int mode)
 	default:
 	case O_RDWR:
 		errno = EINVAL;
-		return -1;
+		return (void*)-1;
 	}
 
 	fd = open(pathname, oflags, mode);
 	if (fd == -1)
-		return -1;
+		return (void*)-1;
 
 	if ((oflags & O_CREAT) && fchmod(fd, mode))
 	{
 		close(fd);
-		return -1;
+		return (void*)-1;
 	}
 
 	gzf = gzdopen(fd, gzoflags);
 	if (!gzf)
 	{
 		errno = ENOMEM;
-		return -1;
+		return (void*)-1;
 	}
 
-	/* This is a bad thing to do on big-endian lp64 systems, where the
-	   size and placement of integers is different than pointers.
-	   However, to fix the problem 4 wrapper functions would be needed and
-	   an extra bit of data associating GZF with the wrapper functions.  */
-	return (int)gzf;
+	return gzf;
 }
 
 tartype_t gztype = { (openfunc_t) gzopen_frontend, (closefunc_t) gzclose,
@@ -374,5 +369,3 @@ main(int argc, char *argv[])
 	free(rootdir);
 	return return_code;
 }
-
-

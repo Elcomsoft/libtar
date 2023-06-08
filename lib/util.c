@@ -99,7 +99,11 @@ mkdirhier(char *path)
 			strcat(dst, "/");
 		strcat(dst, dirp);
 
-		if (mkdir(dst, 0777) == -1)
+#ifdef HAVE_WINDOWS_H
+    if (mkdir(dst) == -1)
+#else
+    if (mkdir(dst, 0777) == -1)
+#endif
 		{
 			if (errno != EEXIST)
 				return -1;
@@ -168,5 +172,3 @@ int_to_oct_nonull(int num, char *oct, size_t octlen)
 	snprintf(oct, octlen, "%*lo", (int)(octlen - 1), (unsigned long)num);
 	oct[octlen - 1] = ' ';
 }
-
-

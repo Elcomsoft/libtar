@@ -74,7 +74,9 @@ static char rcsid[] = "$OpenBSD: glob.c,v 1.8 1998/08/14 21:39:30 deraadt Exp $"
 
 #include <dirent.h>
 #include <errno.h>
-#include <pwd.h>
+#ifdef HAVE_PWD_H
+# include <pwd.h>
+#endif
 #include <stdio.h>
 
 #ifdef STDC_HEADERS

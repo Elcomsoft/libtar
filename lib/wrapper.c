@@ -130,7 +130,12 @@ tar_append_tree(TAR *t, char *realdir, char *savedir)
 			snprintf(savepath, MAXPATHLEN, "%s/%s", savedir,
 				 dent->d_name);
 
-		if (lstat(realpath, &s) != 0)
+
+#ifdef HAVE_WINDOWS_H
+    if (stat(realpath, &s) != 0)
+#else
+    if (lstat(realpath, &s) != 0)
+#endif
 			goto out;
 
 		if (S_ISDIR(s.st_mode))
@@ -152,5 +157,3 @@ out:
 	closedir(dp);
 	return ret;
 }
-
-

@@ -28,6 +28,12 @@
 # include <unistd.h>
 #endif
 
+#ifdef HAVE_WINDOWS_H
+# define WINVER 0x0600
+# define _WIN32_WINNT 0x0600
+# include <windows.h>
+# include <winbase.h>
+#endif
 
 static int
 tar_set_file_perms(TAR *t, char *realname)
@@ -44,6 +50,7 @@ tar_set_file_perms(TAR *t, char *realname)
 	gid = th_get_gid(t);
 	ut.modtime = ut.actime = th_get_mtime(t);
 
+#ifndef HAVE_WINDOWS_H
 	/* change owner/group */
 	if (geteuid() == 0)
 #ifdef HAVE_LCHOWN
@@ -63,6 +70,7 @@ tar_set_file_perms(TAR *t, char *realname)
 #endif /* HAVE_LCHOWN */
 			return -1;
 		}
+#endif //HAVE_WINDOWS_H
 
 	/* change access/modification time */
 	if (!TH_ISSYM(t) && utime(filename, &ut) == -1)
@@ -98,7 +106,11 @@ tar_extract_file(TAR *t, char *realname)
 	{
 		struct stat s;
 
-		if (lstat(realname, &s) == 0 || errno != ENOENT)
+#ifdef HAVE_WINDOWS_H
+  if (stat(realname, &s) == 0 || errno != ENOENT)
+#else
+  if (lstat(realname, &s) == 0 || errno != ENOENT)
+#endif
 		{
 			errno = EEXIST;
 			return -1;
@@ -313,7 +325,12 @@ tar_extract_hardlink(TAR * t, char *realname)
 #ifdef DEBUG
 	printf("  ==> extracting: %s (link to %s)\n", filename, linktgt);
 #endif
-	if (link(linktgt, filename) == -1)
+
+#ifdef HAVE_WINDOWS_H
+  if (CreateHardLinkA(linktgt, filename, NULL) == NULL)
+#else
+  if (link(linktgt, filename) == -1)
+#endif
 	{
 #ifdef DEBUG
 		perror("link()");
@@ -348,7 +365,14 @@ tar_extract_symlink(TAR *t, char *realname)
 	printf("  ==> extracting: %s (symlink to %s)\n",
 	       filename, safer_name_suffix(th_get_linkname(t)));
 #endif
-	if (symlink(safer_name_suffix(th_get_linkname(t)), filename) == -1)
+
+#ifdef HAVE_WINDOWS_H
+#warning TODO: check if we are symlinking a directory!!!!
+  int isDirectory = 0;
+  if (CreateSymbolicLinkA(safer_name_suffix(th_get_linkname(t)), filename, isDirectory ? SYMBOLIC_LINK_FLAG_DIRECTORY : 0) == NULL)
+#else
+  if (symlink(safer_name_suffix(th_get_linkname(t)), filename) == -1)
+#endif
 	{
 #ifdef DEBUG
 		perror("symlink()");
@@ -386,8 +410,11 @@ tar_extract_chardev(TAR *t, char *realname)
 	printf("  ==> extracting: %s (character device %ld,%ld)\n",
 	       filename, devmaj, devmin);
 #endif
+
+#ifndef HAVE_WINDOWS_H
 	if (mknod(filename, mode | S_IFCHR,
 		  compat_makedev(devmaj, devmin)) == -1)
+#endif
 	{
 #ifdef DEBUG
 		perror("mknod()");
@@ -425,8 +452,11 @@ tar_extract_blockdev(TAR *t, char *realname)
 	printf("  ==> extracting: %s (block device %ld,%ld)\n",
 	       filename, devmaj, devmin);
 #endif
+
+#ifndef HAVE_WINDOWS_H
 	if (mknod(filename, mode | S_IFBLK,
 		  compat_makedev(devmaj, devmin)) == -1)
+#endif
 	{
 #ifdef DEBUG
 		perror("mknod()");
@@ -461,7 +491,11 @@ tar_extract_dir(TAR *t, char *realname)
 	printf("  ==> extracting: %s (mode %04o, directory)\n", filename,
 	       mode);
 #endif
-	if (mkdir(filename, mode) == -1)
+#ifdef HAVE_WINDOWS_H
+  if (mkdir(filename) == -1)
+#else
+  if (mkdir(filename, mode) == -1)
+#endif
 	{
 		if (errno == EEXIST)
 		{
@@ -515,7 +549,9 @@ tar_extract_fifo(TAR *t, char *realname)
 #ifdef DEBUG
 	printf("  ==> extracting: %s (fifo)\n", filename);
 #endif
+#ifndef HAVE_WINDOWS_H
 	if (mkfifo(filename, mode) == -1)
+#endif
 	{
 #ifdef DEBUG
 		perror("mkfifo()");
@@ -525,5 +561,3 @@ tar_extract_fifo(TAR *t, char *realname)
 
 	return 0;
 }
-
-

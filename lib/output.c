@@ -14,8 +14,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <pwd.h>
-#include <grp.h>
+#ifdef HAVE_PWD_H
+# include <pwd.h>
+#endif
+#ifdef HAVE_GRP_H
+# include <grp.h>
+#endif
 #include <time.h>
 #include <limits.h>
 #include <sys/param.h>
@@ -64,8 +68,12 @@ void
 th_print_long_ls(TAR *t)
 {
 	char modestring[12];
+#ifdef HAVE_PWD_H
 	struct passwd *pw;
+#endif
+#ifdef HAVE_GRP_H
 	struct group *gr;
+#endif
 	uid_t uid;
 	gid_t gid;
 	char username[_POSIX_LOGIN_NAME_MAX];
@@ -83,18 +91,22 @@ th_print_long_ls(TAR *t)
 #endif
 
 	uid = th_get_uid(t);
+#ifdef HAVE_PWD_H
 	pw = getpwuid(uid);
-	if (pw == NULL)
-		snprintf(username, sizeof(username), "%d", uid);
+	if (pw != NULL)
+    strlcpy(username, pw->pw_name, sizeof(username));
 	else
-		strlcpy(username, pw->pw_name, sizeof(username));
+#endif
+    snprintf(username, sizeof(username), "%d", uid);
 
 	gid = th_get_gid(t);
+#ifdef HAVE_GRP_H
 	gr = getgrgid(gid);
-	if (gr == NULL)
-		snprintf(groupname, sizeof(groupname), "%d", gid);
+	if (gr != NULL)
+    strlcpy(groupname, gr->gr_name, sizeof(groupname));
 	else
-		strlcpy(groupname, gr->gr_name, sizeof(groupname));
+#endif
+    snprintf(groupname, sizeof(groupname), "%d", gid);
 
 	strmode(th_get_mode(t), modestring);
 	printf("%.10s %-8.8s %-8.8s ", modestring, username, groupname);
@@ -131,5 +143,3 @@ th_print_long_ls(TAR *t)
 
 	putchar('\n');
 }
-
-

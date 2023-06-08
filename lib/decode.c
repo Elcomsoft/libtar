@@ -15,8 +15,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/param.h>
-#include <pwd.h>
-#include <grp.h>
+#ifdef HAVE_PWD_H
+# include <pwd.h>
+#endif
+#ifdef HAVE_GRP_H
+# include <grp.h>
+#endif
 
 #ifdef STDC_HEADERS
 # include <string.h>
@@ -25,6 +29,17 @@
 char *
 safer_name_suffix (char const *file_name)
 {
+	/*
+		What the actual fuck???
+		Who's idea was it to make symlink destinations "safe" ?????
+
+		This literally just breaks making symlinks which either start with "/",
+		making it a relative instead of absolute symlink.
+		Also "../" symlink also don't work, wtf!?!?!?
+	*/
+	return file_name;
+
+
 	char const *p, *t;
 	p = t = file_name;
 	while (*p == '/') t = ++p;
@@ -94,12 +109,13 @@ uid_t
 th_get_uid(TAR *t)
 {
 	int uid;
+#ifdef HAVE_PWD_H
 	struct passwd *pw;
 
 	pw = getpwnam(t->th_buf.uname);
 	if (pw != NULL)
 		return pw->pw_uid;
-
+#endif
 	/* if the password entry doesn't exist */
 	sscanf(t->th_buf.uid, "%o", &uid);
 	return uid;
@@ -110,12 +126,13 @@ gid_t
 th_get_gid(TAR *t)
 {
 	int gid;
-	struct group *gr;
+#ifdef HAVE_PWD_H
+  struct group *gr;
 
 	gr = getgrnam(t->th_buf.gname);
 	if (gr != NULL)
 		return gr->gr_gid;
-
+#endif
 	/* if the group entry doesn't exist */
 	sscanf(t->th_buf.gid, "%o", &gid);
 	return gid;
@@ -163,5 +180,3 @@ th_get_mode(TAR *t)
 
 	return mode;
 }
-
-

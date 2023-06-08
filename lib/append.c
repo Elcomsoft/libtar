@@ -76,7 +76,11 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 	       (savename ? savename : "[NULL]"));
 #endif
 
-	if (lstat(realname, &s) != 0)
+#ifdef HAVE_WINDOWS_H
+  if (stat(realname, &s) != 0)
+#else
+  if (lstat(realname, &s) != 0)
+#endif
 	{
 #ifdef DEBUG
 		perror("lstat()");
@@ -151,6 +155,7 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 		libtar_hash_add(td->td_h, ti);
 	}
 
+#ifndef HAVE_WINDOWS_H
 	/* check if it's a symlink */
 	if (TH_ISSYM(t))
 	{
@@ -166,6 +171,7 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
 #endif
 		th_set_link(t, path);
 	}
+#endif
 
 	/* print file info */
 	if (t->options & TAR_VERBOSE)
@@ -271,5 +277,3 @@ fail:
 
 	return rv;
 }
-
-

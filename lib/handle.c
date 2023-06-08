@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <stdint.h>
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -27,7 +28,7 @@
 
 const char libtar_version[] = PACKAGE_VERSION;
 
-static tartype_t default_type = { open, close, read, write };
+static tartype_t default_type = { (openfunc_t)open, (closefunc_t)close, (readfunc_t)read, (writefunc_t)write };
 
 static unsigned int dev_hash_wrap(void *p, unsigned int n)
 {
@@ -62,6 +63,7 @@ tar_init(TAR **t, const char *pathname, tartype_t *type,
 	if ((*t)->h == NULL)
 	{
 		free(*t);
+		*t = NULL;
 		return -1;
 	}
 
@@ -85,10 +87,11 @@ tar_open(TAR **t, const char *pathname, tartype_t *type,
 #endif
 
 	(*t)->fd = (*((*t)->type->openfunc))(pathname, oflags, mode);
-	if ((*t)->fd == -1)
+	if ((*t)->fd == (void*)-1)
 	{
 		libtar_hash_free((*t)->h, NULL);
 		free(*t);
+		*t = NULL;
 		return -1;
 	}
 
@@ -103,14 +106,27 @@ tar_fdopen(TAR **t, int fd, const char *pathname, tartype_t *type,
 	if (tar_init(t, pathname, type, oflags, mode, options) == -1)
 		return -1;
 
-	(*t)->fd = fd;
+	(*t)->fd = (void*)(uint64_t)fd;
+	return 0;
+}
+
+int
+tar_fdpopen(TAR **t, void *fdp, const char *pathname, tartype_t *type,
+	   int oflags, int mode, int options)
+{
+	if (tar_init(t, pathname, type, oflags, mode, options) == -1)
+		return -1;
+
+	(*t)->fd = fdp;
 	return 0;
 }
 
 
-int
-tar_fd(TAR *t)
-{
+int tar_fd(TAR *t){
+	return (int)(uint64_t)t->fd;
+}
+
+void *tar_fdp(TAR *t){
 	return t->fd;
 }
 
@@ -133,5 +149,3 @@ tar_close(TAR *t)
 
 	return i;
 }
-
-

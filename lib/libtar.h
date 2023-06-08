@@ -63,10 +63,10 @@ struct tar_header
 
 /***** handle.c ************************************************************/
 
-typedef int (*openfunc_t)(const char *, int, ...);
-typedef int (*closefunc_t)(int);
-typedef ssize_t (*readfunc_t)(int, void *, size_t);
-typedef ssize_t (*writefunc_t)(int, const void *, size_t);
+typedef void *(*openfunc_t)(const char *, int, ...);
+typedef int (*closefunc_t)(void *);
+typedef ssize_t (*readfunc_t)(void *, void *, size_t);
+typedef ssize_t (*writefunc_t)(void *, const void *, size_t);
 
 typedef struct
 {
@@ -81,7 +81,7 @@ typedef struct
 {
 	tartype_t *type;
 	const char *pathname;
-	long fd;
+	void *fd;
 	int oflags;
 	int options;
 	struct tar_header th_buf;
@@ -114,9 +114,12 @@ int tar_open(TAR **t, const char *pathname, tartype_t *type,
 /* make a tarfile handle out of a previously-opened descriptor */
 int tar_fdopen(TAR **t, int fd, const char *pathname, tartype_t *type,
 	       int oflags, int mode, int options);
+int tar_fdpopen(TAR **t, void *fdp, const char *pathname, tartype_t *type,
+	       int oflags, int mode, int options);
 
 /* returns the descriptor associated with t */
 int tar_fd(TAR *t);
+void *tar_fdp(TAR *t);
 
 /* close tarfile handle */
 int tar_close(TAR *t);
@@ -303,4 +306,3 @@ int tar_append_tree(TAR *t, char *realdir, char *savedir);
 #endif
 
 #endif /* ! LIBTAR_H */
-
