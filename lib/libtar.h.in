@@ -24,6 +24,13 @@ extern "C"
 {
 #endif
 
+#if !@HEADER_HAVE_UID_T@ //HEADER_HAVE_UID_T
+#include <stdint.h>
+#undef uid_t
+#undef gid_t
+typedef uint32_t uid_t;
+typedef uint32_t gid_t;
+#endif //HEADER_HAVE_UID_T
 
 /* useful constants */
 /* see FIXME note in block.c regarding T_BLOCKSIZE */

@@ -13,10 +13,13 @@
 #include <config.h>
 #include <libtar.h>
 
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/param.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 
 #ifdef STDC_HEADERS
@@ -36,6 +39,10 @@
 #endif
 
 #include <compat.h>
+
+#ifndef HAVE_FCHMOD
+#define fchmod(a,b) 0
+#endif
 
 
 char *progname;

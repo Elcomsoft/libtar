@@ -14,3 +14,7 @@ Makefile
 /libtool
 /stamp-h1
 autoconf
+.vscode
+config.h.in~
+configure~
+lib/libtar.h

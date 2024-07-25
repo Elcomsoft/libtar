@@ -8,7 +8,7 @@ Copyright (c) 1998-2003 University of Illinois Board of Trustees
 Copyright (c) 1998-2003 Mark D. Roth
 All rights reserved.
 ]])
-AC_CONFIG_SRCDIR([lib/libtar.h])
+AC_CONFIG_SRCDIR([lib/libtar.h.in])
 AC_CONFIG_MACRO_DIR([autoconf])
 AM_INIT_AUTOMAKE([dist-bzip2])
 ENCAP_PKG([], [postinstall-encap])
@@ -99,7 +99,7 @@ dnl ### Check for needed functions. ################################
 COMPAT_FUNC_BASENAME
 COMPAT_FUNC_DIRNAME
 COMPAT_FUNC_FNMATCH
-AC_CHECK_FUNCS([lchown])
+AC_CHECK_FUNCS([lchown fchmod])
 COMPAT_FUNC_MAKEDEV
 COMPAT_FUNC_SNPRINTF
 COMPAT_FUNC_STRDUP
@@ -108,6 +108,12 @@ COMPAT_FUNC_STRLCPY
 COMPAT_FUNC_STRMODE
 COMPAT_FUNC_STRSEP
 
+
+if test "x$ac_cv_type_uid_t" == "xyes"; then
+  AC_SUBST([HEADER_HAVE_UID_T], [1])
+else
+  AC_SUBST([HEADER_HAVE_UID_T], [0])
+fi
 
 dnl ### Check for libraries. #######################################
 AC_ARG_WITH([zlib],
@@ -130,5 +136,5 @@ esac
 
 
 dnl ### Create output files. #######################################
-AC_CONFIG_FILES([Makefile lib/Makefile libtar/Makefile doc/Makefile])
+AC_CONFIG_FILES([Makefile lib/Makefile libtar/Makefile doc/Makefile lib/libtar.h])
 AC_OUTPUT
